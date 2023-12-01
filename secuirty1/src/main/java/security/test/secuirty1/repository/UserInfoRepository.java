@@ -9,6 +9,7 @@ import security.test.secuirty1.entity.UserInfo;
 @Repository
 public interface UserInfoRepository extends JpaRepository<UserInfo,Long>
 {
-    Optional<UserInfo> findByName(String name);
+        Optional<UserInfo> findByName(String name);
 
 }
+

@@ -2,7 +2,8 @@ package security.test.secuirty1.service;
 
 import java.util.HashMap;
 import java.util.Date;
-import org.hibernate.mapping.Map;
+import java.util.Map;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import java.security.Key;
 import java.util.function.Function;
@@ -14,7 +15,7 @@ import io.jsonwebtoken.security.Keys;
 
 @Component
 public class JwtService {
-    private final String secret = "eyJhbGciOiJIUzM4NCJ9.eyJSb2xlIjoiQWRtaW4iLCJJc3N1ZXIiOiJJc3N1ZXIiLCJVc2VybmFtZSI6IkphdmFJblVzZSIsImV4cCI6MTcwMDgyODg0MiwiaWF0IjoxNzAwODI4ODQyfQ.YpUKaurYL-LxZUhq99LgyWwAXuqjU2bEXtDEx44ljzdbRWTwaVCOa5mn3_-Js2Rs";
+    private final String secret = "eyJhbGciOiJIUzM4NCJ9eyJSb2xlIjoiQWRtaW4iLCJJc3N1ZXIiOiJJc3N1ZXIiLCJVc2VybmFtZSI6IkphdmFJblVzZSIsImV4cCI6MTcwMDgyODg0MiwiaWF0IjoxNzAwODI4ODQyfQYpUKaurYLLxZUhq99LgyWwAXuqjU2bEXtDEx44ljzdbRWTwaVCOa5mn3Js2Rs";
     
     public String generateToken(String username)
     {
@@ -49,5 +50,13 @@ public class JwtService {
         .build()
         .parseClaimsJws(token)
         .getBody();
+    }
+    private Boolean isTokenExipred(String Token){
+        return extractExpirationDate(Token).before(new Date());
+
+    }
+    public Boolean validateToken(String token,UserDetails userDetails){
+        final String username = extractUsername(token);
+        return username.equals(userDetails.getUsername()) && !isTokenExipred(token);
     }
 }

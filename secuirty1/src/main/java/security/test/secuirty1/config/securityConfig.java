@@ -8,14 +8,19 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider; 
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration; 
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity; 
-import org.springframework.security.config.annotation.web.builders.HttpSecurity; 
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity; 
 import org.springframework.security.config.http.SessionCreationPolicy; 
 import org.springframework.security.core.userdetails.UserDetailsService; 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder; 
 import org.springframework.security.crypto.password.PasswordEncoder; 
 import org.springframework.security.web.SecurityFilterChain; 
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter; 
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+
+import security.test.secuirty1.filter.JwtAuthFilter;
+import security.test.secuirty1.service.UserInfoService; 
 
 
 @Configuration
@@ -23,16 +28,27 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity
 public class securityConfig {
 
+    @Autowired
+    JwtAuthFilter authFilter;
+
+    @Bean
+    public UserDetailsService userDetailsService(){
+        return new UserInfoService();
+    }
+
     @Bean
     public SecurityFilterChain securityFilterChain (HttpSecurity http) throws Exception{
+        
         return http.csrf(csrf -> csrf.disable())
-        .authorizeHttpRequests(authorizeRequests -> authorizeRequests.
-        requestMatchers("/auth/welcome", "/auth/addNewUser", "/auth/generateToken").permitAll()
-        .requestMatchers("/auth/user/**").authenticated()
-        .requestMatchers("/auth/admin/**").authenticated().
-        anyRequest().authenticated()
-        ).sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and().authenticationProvider(authenticationProvider()).
-        addFilter(authFilter,UsernamePasswordAuthenticationFilter.class).build();
+                .authorizeHttpRequests(authorizeRequests -> authorizeRequests.
+                                requestMatchers("/auth/generatetoken","/auth/welcome", "/auth/addNewUser","/auth/open").permitAll()
+                                .requestMatchers("/auth/user/**").authenticated()
+                                .requestMatchers("/auth/admin/**").authenticated().
+                                anyRequest().authenticated()
+                ).sessionManagement(management -> management.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authenticationProvider(this.authenticationProvider()).
+                addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class)
+                .build();
     }
     @Bean
     public PasswordEncoder passwordEncoder (){
@@ -42,8 +58,7 @@ public class securityConfig {
     public AuthenticationProvider authenticationProvider()
     {
         DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
-        // to do create  a userDetail service
-        authenticationProvider.setUserDetailsService(null);
+        authenticationProvider.setUserDetailsService(this.userDetailsService());
         authenticationProvider.setPasswordEncoder(passwordEncoder());   
         return authenticationProvider ;
     }
